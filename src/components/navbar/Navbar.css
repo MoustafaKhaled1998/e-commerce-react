@@ -1,0 +1,27 @@
+.cart-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.cart-label {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.cart-badge {
+    font-size: 0.7rem;
+    min-width: 18px;
+    padding: 2px 5px;
+}
+
+.cart-btn {
+    height: 36px;
+}
+
+.search-container {
+    margin-left: 2rem;
+    flex: 1;
+    max-width: 400px;
+}
