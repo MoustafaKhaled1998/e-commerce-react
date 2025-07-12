@@ -38,11 +38,7 @@ function AppContent() {
         },
         {
           path: "card-details/:id",
-          element: (
-            <ProtectedRoute>
-              <CardDetails />
-            </ProtectedRoute>
-          )
+          element: <CardDetails />
         }
       ]
     }
