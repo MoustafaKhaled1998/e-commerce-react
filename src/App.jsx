@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Cart from "./pages/Cart";
 import CardDetails from "./pages/CardDetails";
+import Wishlist from "./pages/Wishlist";
 
 function AppContent() {
   const router = createBrowserRouter([
@@ -35,6 +36,10 @@ function AppContent() {
               <Cart />
             </ProtectedRoute>
           )
+        },
+        {
+          path: "wishlist",
+          element: <Wishlist />
         },
         {
           path: "card-details/:id",

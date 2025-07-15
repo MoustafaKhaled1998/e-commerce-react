@@ -5,6 +5,8 @@ import { useProduct } from "../hooks";
 import ReactStars from "react-stars";
 import "../components/products/Products.css";
 import { useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { addToWishlist, removeFromWishlist } from '../redux/wishlistSlice';
 
 export default function CardDetails() {
   const { id } = useParams();
@@ -13,6 +15,9 @@ export default function CardDetails() {
   const navigate = useNavigate();
   const { product, loading, error } = useProduct(id);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const dispatch = useDispatch();
+  const wishlistItems = useSelector(state => state.wishlist.items);
+  const isInWishlist = wishlistItems.some(item => item.id === product?.id);
 
   const cartItem = cart[id];
   const quantity = cartItem?.quantity || 0;
@@ -28,6 +33,21 @@ export default function CardDetails() {
   const handleQuantityChange = (newQuantity) => {
     if (newQuantity <= product.stock) {
       updateQuantity(product.id, newQuantity);
+    }
+  };
+
+  const handleWishlistToggle = (e) => {
+    e.stopPropagation();
+    if (!product) return;
+    if (isInWishlist) {
+      dispatch(removeFromWishlist(product.id));
+    } else {
+      dispatch(addToWishlist({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.thumbnail
+      }));
     }
   };
 
@@ -66,16 +86,29 @@ export default function CardDetails() {
             ← Back to Home
           </Link>
         </div>
-        
-        <div className="row align-items-stretch" style={{ minHeight: '350px' }}>
-          <div className="col-lg-6 mb-4 h-100 d-flex carddetails-img-col">
+        <div className="row align-items-stretch carddetails-row-minheight">
+          <div className="col-lg-6 mb-4 h-100 d-flex carddetails-img-col position-relative">
+            <button
+              className="wishlist-icon-btn position-absolute wishlist-icon-top-right"
+              onClick={handleWishlistToggle}
+              aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              {isInWishlist ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#ff4757" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff4757" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              )}
+            </button>
             <img 
               src={product.thumbnail} 
               alt={product.title} 
               className="img-fluid rounded shadow product-img carddetails-img-full m-auto"
             />
           </div>
-          
           <div className="col-lg-6 h-100 d-flex flex-column justify-content-between">
             <div>
               <h1 className="mb-3 text-dark">{product.title}</h1>
@@ -153,7 +186,6 @@ export default function CardDetails() {
             </div>
           </div>
         </div>
-        
         {product.images && product.images.length > 1 && (
           <div className="mt-5">
             <h3 className="mb-3">More Images</h3>
@@ -170,9 +202,8 @@ export default function CardDetails() {
           </div>
         )}
       </div>
-
       {showLoginModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+        <div className="modal fade show d-block login-modal-overlay">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">

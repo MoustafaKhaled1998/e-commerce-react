@@ -20,8 +20,40 @@
     height: 36px;
 }
 
+.wishlist-btn, .cart-btn {
+    background-color: #212529 !important;
+    color: #fff !important;
+    border: none !important;
+    position: relative;
+}
+.wishlist-btn:hover, .cart-btn:hover {
+    background-color: #343a40 !important;
+    color: #fff !important;
+}
+
+.wishlist-badge {
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    position: absolute;
+    font-size: 0.7rem;
+    min-width: 18px;
+    padding: 2px 5px;
+    z-index: 2;
+}
+
 .search-container {
     margin-left: 2rem;
     flex: 1;
     max-width: 400px;
+}
+
+.wishlist-navbar-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.navbar {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }

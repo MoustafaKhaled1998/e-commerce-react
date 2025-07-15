@@ -4,12 +4,14 @@ import { useApp } from "../../context/AppContext";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import { useSelector } from 'react-redux';
 
 export default function Navbar({ onSearch }) {
   const { total } = useCart();
   const { user, isAuthenticated, logout } = useApp();
   const location = useLocation();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const wishlistCount = useSelector(state => state.wishlist.items.length);
 
   const handleLogout = () => {
     logout();
@@ -70,8 +72,24 @@ export default function Navbar({ onSearch }) {
                 />
               </div>
               <Link 
+                to="/wishlist" 
+                className="btn btn-warning d-flex align-items-center p-1 wishlist-btn"
+              >
+                <img 
+                  src="https://cdn-icons-png.flaticon.com/512/833/833472.png" 
+                  alt="wishlist" 
+                  className="me-1 wishlist-navbar-icon"
+                />
+                <span className="wishlist-label">Wishlist</span>
+                {wishlistCount > 0 && (
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger wishlist-badge">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+              <Link 
                 to="/cart" 
-                className="btn btn-outline-light position-relative d-flex align-items-center p-1 cart-btn"
+                className="btn btn-light position-relative d-flex align-items-center p-1 cart-btn"
                 onClick={handleCartClick}
               >
                 <img 
@@ -90,9 +108,8 @@ export default function Navbar({ onSearch }) {
           </div>
         </div>
       </nav>
-
       {showLoginModal && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div className="modal fade show d-block login-modal-overlay">
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">

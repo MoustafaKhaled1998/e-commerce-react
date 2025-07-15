@@ -1,3 +1,3 @@
-export { useProduct } from './useProduct';
-export { useProducts } from './useProducts';
-export { useAsync } from './useAsync'; 
+export * from './useProducts';
+export * from './useProduct';
+export * from './useAsync'; 

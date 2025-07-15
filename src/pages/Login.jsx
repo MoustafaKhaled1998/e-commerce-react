@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { useApp } from "../context/AppContext";
 
 export default function Login() {
@@ -7,13 +7,17 @@ export default function Login() {
   const location = useLocation();
   const { login, isAuthenticated } = useApp();
   const from = location.state?.from?.pathname || "/";
+  const initialFormData = useRef(null);
 
   const [formData, setFormData] = useState({
-    email: location.state?.registeredEmail || "",
+    email: "",
     password: ""
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -21,132 +25,117 @@ export default function Login() {
     }
   }, [isAuthenticated, navigate, from]);
 
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+  useEffect(() => {
+    if (!initialFormData.current) {
+      initialFormData.current = { ...formData };
     }
+  }, []);
 
-    if (!formData.password.trim()) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+  useEffect(() => {
+    if (initialFormData.current) {
+      const hasChanges = Object.keys(formData).some(
+        key => formData[key] !== initialFormData.current[key]
+      );
+      setIsDirty(hasChanges);
     }
+  }, [formData]);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && !isSubmitting && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      setShowConfirmDialog(true);
+      setPendingNavigation(blocker.location);
+    }
+  }, [blocker]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ""
-      }));
-    }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: undefined });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      setIsSubmitting(true);
-      
-      setTimeout(() => {
-        const userData = {
-          email: formData.email,
-          id: Date.now(),
-          username: formData.email.split('@')[0]
-        };
-        login(userData);
+    setIsSubmitting(true);
+    setErrors({});
+    try {
+      if (!formData.email) {
+        setErrors(prev => ({ ...prev, email: "Email is required" }));
         setIsSubmitting(false);
-        navigate(from, { replace: true, state: {} });
-      }, 1000);
+        return;
+      }
+      if (!formData.password) {
+        setErrors(prev => ({ ...prev, password: "Password is required" }));
+        setIsSubmitting(false);
+        return;
+      }
+      await login({ email: formData.email });
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
-        <div className="col-md-6 col-lg-4">
-          <div className="card shadow">
-            <div className="card-body p-4">
-              <h2 className="text-center mb-4">Login</h2>
-              {location.state?.message && (
-                <div className="alert alert-success mb-3">
-                  <small>{location.state.message}</small>
-                </div>
-              )}
-              {from !== "/" && !location.state?.message && (
-                <div className="alert alert-info mb-3">
-                  <small>Please log in to access the requested page.</small>
-                </div>
-              )}
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <input 
-                    type="email" 
-                    name="email"
-                    placeholder="Email" 
-                    className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                    value={formData.email}
-                    onChange={handleChange}
-                  />
-                  {errors.email && (
-                    <div className="invalid-feedback">
-                      {errors.email}
-                    </div>
-                  )}
-                </div>
-                <div className="mb-3">
-                  <input 
-                    type="password" 
-                    name="password"
-                    placeholder="Password" 
-                    className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                    value={formData.password}
-                    onChange={handleChange}
-                  />
-                  {errors.password && (
-                    <div className="invalid-feedback">
-                      {errors.password}
-                    </div>
-                  )}
-                </div>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary w-100 mb-3"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Logging in...
-                    </>
-                  ) : (
-                    "Login"
-                  )}
-                </button>
-                <div className="text-center">
-                  <small className="text-muted">
-                    Don't have an account? <Link to="/register" className="text-decoration-none">Register here</Link>
-                  </small>
-                </div>
-              </form>
+        <div className="col-md-6 col-lg-5">
+          <div className="card shadow-sm p-4">
+            <h2 className="mb-4 text-center">Login</h2>
+            {errors.form && <div className="alert alert-danger">{errors.form}</div>}
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <input 
+                  type="email" 
+                  name="email"
+                  placeholder="Email" 
+                  className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+                {errors.email && (
+                  <div className="invalid-feedback">
+                    {errors.email}
+                  </div>
+                )}
+              </div>
+              <div className="mb-3">
+                <input 
+                  type="password" 
+                  name="password"
+                  placeholder="Password" 
+                  className={`form-control ${errors.password ? 'is-invalid' : ''}`}
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+                {errors.password && (
+                  <div className="invalid-feedback">
+                    {errors.password}
+                  </div>
+                )}
+              </div>
+              <button 
+                type="submit" 
+                className="btn btn-primary w-100 mb-3"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
+              </button>
+            </form>
+            <div className="text-center mt-3">
+              <span>Don't have an account? </span>
+              <Link to="/register">Register</Link>
             </div>
           </div>
         </div>

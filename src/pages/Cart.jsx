@@ -23,7 +23,6 @@ export default function Cart() {
       <div className="row justify-content-center">
         <div className="col-lg-8">
           <h2 className="text-center mb-4">Shopping Cart</h2>
-          
           {items.length === 0 ? (
             <div className="text-center">
               <div className="alert alert-info">
@@ -35,23 +34,16 @@ export default function Cart() {
               </Link>
             </div>
           ) : (
-            <>
-              <div className="card">
-                <div className="card-body">
-                  {items.map(({ product, quantity }) => (
-                    <div key={product.id} className="d-flex align-items-center justify-content-between py-2 border-bottom">
-                      <div className="d-flex align-items-center">
-                        <img 
-                          src={product.thumbnail} 
-                          alt={product.title} 
-                          className="me-3 product-img"
-                        />
-                        <div>
-                          <h6 className="mb-0">{product.title}</h6>
-                          <small className="text-muted">${product.price} each</small>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center gap-2">
+            <div className="card shadow-sm">
+              <div className="card-body">
+                {items.map(({ product, quantity }) => (
+                  <div key={product.id} className="cart-item-row">
+                    <div style={{width: '80px', flexShrink: 0}}>
+                      <img src={product.thumbnail} alt={product.title} className="cart-img-thumb" />
+                    </div>
+                    <div className="cart-item-content">
+                      <h5 className="cart-item-title">{product.title}</h5>
+                      <div className="cart-item-controls">
                         <div className="input-group cart-qty-group">
                           <button 
                             className="btn btn-outline-secondary btn-sm"
@@ -75,20 +67,20 @@ export default function Cart() {
                         >
                           Remove
                         </button>
-                        <div className="text-end ms-3">
-                          <span className="fw-bold">${(product.price * quantity).toFixed(2)}</span>
+                        <div className="text-end ms-3 cart-item-price">
+                          ${(product.price * quantity).toFixed(2)}
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-                <div className="card-footer">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0">Total: <span className="text-success">${totalPrice.toFixed(2)}</span></h5>
                   </div>
+                ))}
+              </div>
+              <div className="card-footer">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h5 className="mb-0">Total: <span className="text-success">${totalPrice.toFixed(2)}</span></h5>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
